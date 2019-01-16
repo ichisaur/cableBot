@@ -7,41 +7,32 @@ Yichen
 Alex
 
 ## Electrical
-Yichen
+Yichen <br>
 Alex
 
 ## CAD
-Lukai
-
-Jordan
-
+Lukai<br>
+Jordan<br>
 Alex
 
 ## Manufacturing
-Alex 
-
+Alex <br>
 Literally Everyone
 
 ## Software
-Qinjie
-
-Jordan
-
+Qinjie<br>
+Jordan<br>
 Lukai
 
 ## Algorithms
 ?????
 
 # Goals for End of Quarter
-Design for motors
-
-Motor controllers Driver Modules
-
+Design for <br>
+Motor controllers Driver Modules <br>
 Microcontroller Circuitry
-
-External Case Design
-
-Control Algorithm Prototype
+<br>External Case Design
+<br>Control Algorithm Prototype
 
 
 
