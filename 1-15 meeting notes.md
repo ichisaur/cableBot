@@ -1,42 +1,33 @@
-Team Roles
+# Team Roles
 
-Team Leader
+## Team Leader
 Yichen
 
-Treasurer
+## Treasurer
 Alex
 
-Electrical
+## Electrical
 Yichen
 Alex
 
-Eagle
-
-
-
-CAD
+## CAD
 Lukai
 Jordan
 Alex
 
-Still using solidworks
-
-Manufacturing
+## Manufacturing
 Alex 
 Literally Everyone
 
-Software
+## Software
 Qinjie
 Jordan
 Lukai
 
-TI CC studio
-
-Algorithms
+## Algorithms
 ?????
 
-
-
+# Goals for End of Quarter
 Design for motors
 Motor controllers Driver Modules
 Microcontroller Circuitry
