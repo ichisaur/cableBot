@@ -9,6 +9,7 @@ void timer_pwm_init(void);
 void pwma_config(void);
 void pwmb_config(void);
 void pwmc_config(void);
+void inl_config(void);
 
 /**
  * main.c
@@ -144,6 +145,23 @@ void pwmc_config(void)
 
 }
 
+void inl_config(void)
+{
+    //INLA pin config
+    SysCtlPeripheralEnable(DRV8323RS_INLA_PERIPH);
+    while(!SysCtlPeripheralReady(DRV8323RS_INLA_PERIPH));
+    GPIOPinTypeGPIOOutput(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN);
+    //INLB pin config
+    SysCtlPeripheralEnable(DRV8323RS_INLB_PERIPH);
+    while(!SysCtlPeripheralReady(DRV8323RS_INLB_PERIPH));
+    GPIOPinTypeGPIOOutput(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN);
+
+    //INLC pin config
+    SysCtlPeripheralEnable(DRV8323RS_INLC_PERIPH);
+    while(!SysCtlPeripheralReady(DRV8323RS_INLC_PERIPH));
+    GPIOPinTypeGPIOOutput(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN);
+}
+
 
 
 void init(void)
@@ -153,22 +171,8 @@ void init(void)
     pwmb_config();
     pwmc_config();
     //SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF));
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
-    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOC));
+    inl_config();
 
-
-    // Enable the pin used for DRV8323RS chip enable, and set the pin high
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);
-    GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_4);
-    GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_6);
-
-
-    SysCtlPeripheralEnable(DRV8323RS_INLB_PERIPH);
-
-    GPIOPinTypePWM(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN);
-    GPIOPinTypePWM(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN);
 
 
 
