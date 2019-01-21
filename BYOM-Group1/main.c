@@ -3,6 +3,8 @@
 #include <stdarg.h>
 #include <drv8323rs.h>
 
+#define PWM_PERIOD 399
+
 
 void init(void);
 void timer_pwm_init(void);
@@ -64,7 +66,7 @@ void pwma_config(void)
         PWMGenConfigure(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_GEN, PWM_GEN_MODE_DOWN|PWM_GEN_MODE_NO_SYNC);
 
         // Set the period (expressed in clock ticks)
-        PWMGenPeriodSet(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_GEN, 399);;
+        PWMGenPeriodSet(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_GEN, PWM_PERIOD);
 
         // Set the PWM duty cycle to 33%
         PWMPulseWidthSet(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_OUT, 133);
@@ -102,11 +104,12 @@ void pwmb_config(void)
 
     // Configure TimerB as a periodic timer
     TimerConfigure(DRV8323RS_PWMB_BASE, (TIMER_CFG_SPLIT_PAIR |
-            TIMER_CFG_B_PERIODIC));
+            TIMER_CFG_B_PWM));
     //set count time/period
-    TimerLoadSet(DRV8323RS_PWMB_BASE, DRV8323RS_PWMB_TIMER, 1999);
+    TimerLoadSet(DRV8323RS_PWMB_BASE, DRV8323RS_PWMB_TIMER, PWM_PERIOD);
+    TimerControlLevel(DRV8323RS_PWMB_BASE,DRV8323RS_PWMB_TIMER,true);
     //set duty cycle
-    TimerMatchSet(DRV8323RS_PWMB_BASE, DRV8323RS_PWMB_TIMER, 666);
+    TimerMatchSet(DRV8323RS_PWMB_BASE, DRV8323RS_PWMB_TIMER, 133);
     TimerEnable(DRV8323RS_PWMB_BASE, TIMER_B);
 }
 
@@ -132,7 +135,7 @@ void pwmc_config(void)
         PWMGenConfigure(DRV8323RS_PWMC_BASE, DRV8323RS_PWMC_GEN, PWM_GEN_MODE_DOWN|PWM_GEN_MODE_NO_SYNC);
 
         // Set the period (expressed in clock ticks)
-        PWMGenPeriodSet(DRV8323RS_PWMC_BASE, DRV8323RS_PWMC_GEN, 399);;
+        PWMGenPeriodSet(DRV8323RS_PWMC_BASE, DRV8323RS_PWMC_GEN, PWM_PERIOD);
 
         // Set the PWM duty cycle to 33%
         PWMPulseWidthSet(DRV8323RS_PWMC_BASE, DRV8323RS_PWMC_OUT, 133);
