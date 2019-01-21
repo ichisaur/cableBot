@@ -7,19 +7,25 @@
 
 
 void init(void);
-void timer_pwm_init(void);
 void pwma_config(void);
 void pwmb_config(void);
 void pwmc_config(void);
 void inl_config(void);
+void int_config(void);
+extern void halla_int(void);
+extern void hallb_int(void);
+extern void hallc_int(void);
 
 /**
  * main.c
  */
 
+int test = 0;
 uint16_t stuff = 0x00;
 uint16_t new_stuff;
 uint8_t addr = 0x02;
+uint32_t state;
+uint32_t notstate = 20;
 
 
 int main(void)
@@ -36,9 +42,11 @@ int main(void)
        new_stuff = SPIReadDRV8323(addr);
 
 
-       GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_INT_PIN_3);
+
+       //GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_INT_PIN_3);
        GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, GPIO_INT_PIN_4);
        GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, GPIO_INT_PIN_6);
+
 
 
     }
@@ -165,7 +173,23 @@ void inl_config(void)
     GPIOPinTypeGPIOOutput(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN);
 }
 
+void int_config(void)
+{
+    //Hall A sensor Interrupt
+    test = 100;
+    SysCtlPeripheralEnable(DRV8323RS_HALLA_PERIPH);
+    while(!SysCtlPeripheralReady(DRV8323RS_HALLA_PERIPH));
+    GPIOIntRegister(DRV8323RS_HALLA_PORT, halla_int);
+    GPIOPinTypeGPIOInput(DRV8323RS_HALLA_PORT, DRV8323RS_HALLA_PIN);
+    GPIOIntTypeSet(DRV8323RS_HALLA_PORT,DRV8323RS_HALLA_PIN,GPIO_BOTH_EDGES);
+    GPIOIntEnable(DRV8323RS_HALLA_PORT, DRV8323RS_HALLA_PIN);
 
+}
+
+void halla_int(void)
+{
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, !(GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_3)));
+}
 
 void init(void)
 {
@@ -175,7 +199,7 @@ void init(void)
     pwmc_config();
     //SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
     inl_config();
-
+    int_config();
 
 
 
