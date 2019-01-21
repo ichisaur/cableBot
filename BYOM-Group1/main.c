@@ -5,6 +5,9 @@
 
 
 void init(void);
+void timer_pwm_init(void);
+void pwma_config(void);
+
 /**
  * main.c
  */
@@ -17,6 +20,7 @@ uint8_t addr = 0x02;
 int main(void)
 {
     init();
+    pwma_config();
     InitDRV8323RS();
     while(1){
        new_stuff = SPIReadDRV8323(addr);
@@ -33,6 +37,67 @@ int main(void)
 
     }
     return 0;
+}
+void pwma_config(void)
+{
+        // set pwm clock to system clock
+        SysCtlPWMClockSet(SYSCTL_PWMDIV_1);
+
+    //PWMA
+        // Enable PWMA PWM periph (PWM0)
+        SysCtlPeripheralEnable(DRV8323RS_PWMA_PERIPH);
+        while(!SysCtlPeripheralReady(DRV8323RS_PWMA_PERIPH))
+        {
+        }
+
+        //Enable PWMA GPIO periph (GPIOF)
+        SysCtlPeripheralEnable(DRV8323RS_PWMA_GPIO_PERIPH);
+        while(!SysCtlPeripheralReady(DRV8323RS_PWMA_GPIO_PERIPH))
+        {
+        }
+
+        // Configure PWM output pin
+        GPIOPinConfigure(DRV8323RS_PWMA_PIN_CONFIG);
+        GPIOPinTypePWM(DRV8323RS_PWMA_GPIO_PORT,DRV8323RS_PWMA_GPIO_PIN);
+
+        // Configure PWM options
+        PWMGenConfigure(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_GEN, PWM_GEN_MODE_DOWN|PWM_GEN_MODE_NO_SYNC);
+
+        // Set the period (expressed in clock ticks)
+        PWMGenPeriodSet(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_GEN, 249);;
+
+        // Set the PWM duty cycle to 33%
+        PWMPulseWidthSet(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_OUT, 50);
+
+        // Enable the PWM generator
+        PWMGenEnable(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_GEN);
+
+        // Turn on the PWM output pin
+        PWMOutputState(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_OUT_BIT,true);
+
+}
+
+void timer_pwm_init(void)
+{
+        // Enable the Timer0 peripheral
+        //
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER3);
+        //
+        // Wait for the Timer0 module to be ready.
+        //
+        while(!SysCtlPeripheralReady(SYSCTL_PERIPH_TIMER3))
+        {
+        }
+        //
+            // Configure TimerA as a PWM timer
+            //
+            TimerConfigure(TIMER3_BASE, TIMER_CFG_A_PWM);
+            //sets PWM active state to high
+            TimerControlLevel(TIMER3_BASE,TIMER_A, false);
+            //set count time/period
+            TimerLoadSet(TIMER3_BASE, TIMER_A, 3000);
+            //set duty cycle
+            TimerLoadSet(TIMER3_BASE, TIMER_A, 1500);
 }
 
 void init(void)
@@ -62,8 +127,9 @@ void init(void)
 
     // Configure PWM output pin
     GPIOPinConfigure(DRV8323RS_PWMC_PIN_CONFIG);
-    GPIOPinTypePWM(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN);
-    GPIOPinTypePWM(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN);
+    GPIOPinTypePWM(DRV8323RS_PWMC_GPIO_PORT, DRV8323RS_PWMC_GPIO_PIN);
+    //GPIOPinTypePWM(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN);
+    //GPIOPinTypePWM(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN);
 
     // Configure PWM options
     //PWMGenConfigure(?????????);
