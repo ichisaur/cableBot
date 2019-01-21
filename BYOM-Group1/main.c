@@ -21,11 +21,43 @@ void inl_config(void);
 uint16_t stuff = 0x00;
 uint16_t new_stuff;
 uint8_t addr = 0x02;
+uint32_t test;
 
 
 int main(void)
 {
     init();
+    // Enable the Timer3 peripheral.
+    SysCtlPeripheralEnable(DRV8323RS_PWMB_PERIPH);
+    // Wait for the Timer3 module to be ready.
+    //
+    while(!SysCtlPeripheralReady(DRV8323RS_PWMB_PERIPH))
+    {
+    }
+
+    // Use T3CCP1 with port B pin 3. Start by enabling port B
+    SysCtlPeripheralEnable(DRV8323RS_PWMB_GPIO_PERIPH);
+    while(!SysCtlPeripheralReady(DRV8323RS_PWMB_GPIO_PERIPH))
+        {
+        }
+
+
+    // Configure GPIO pin muxing for the Timer/CCP function
+    GPIOPinConfigure(DRV8323RS_PWMB_PIN_CONFIG);
+
+    // Configure the ccp settings for CCP pin
+    GPIOPinTypeTimer(DRV8323RS_PWMB_GPIO_PORT, DRV8323RS_PWMB_GPIO_PIN);
+
+    // Configure TimerB as a periodic timer
+    TimerConfigure(DRV8323RS_PWMB_BASE, (TIMER_CFG_SPLIT_PAIR | TIMER_CFG_A_PERIODIC | TIMER_CFG_B_PERIODIC));
+    //set count time/period
+    TimerLoadSet(DRV8323RS_PWMB_BASE, DRV8323RS_PWMB_TIMER, 3000);
+    test = TimerLoadGet(DRV8323RS_PWMB_BASE, DRV8323RS_PWMB_TIMER);
+    //set duty cycle
+    TimerMatchSet(DRV8323RS_PWMB_BASE, DRV8323RS_PWMB_TIMER, 2000);
+    TimerEnable(DRV8323RS_PWMB_BASE, TIMER_B);
+
+
    InitDRV8323RS();
    new_stuff = SPIReadDRV8323(addr);
    new_stuff = new_stuff & 0b1111111110011111;
@@ -95,7 +127,8 @@ void pwmb_config(void)
     GPIOPinTypeTimer(DRV8323RS_PWMB_GPIO_PORT, DRV8323RS_PWMB_GPIO_PIN);
 
     // Configure TimerB as a periodic timer
-    TimerConfigure(DRV8323RS_PWMB_BASE, (TIMER_CFG_SPLIT_PAIR | TIMER_CFG_B_ONE_SHOT | TIMER_CFG_B_PERIODIC));
+    TimerConfigure(DRV8323RS_PWMB_BASE, (TIMER_CFG_SPLIT_PAIR |
+            TIMER_CFG_B_PERIODIC));
     //set count time/period
     TimerLoadSet(DRV8323RS_PWMB_BASE, DRV8323RS_PWMB_TIMER, PWM_PERIOD);
     //set duty cycle
