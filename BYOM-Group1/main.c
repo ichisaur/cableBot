@@ -45,7 +45,7 @@ int main(void)
 
        //GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_INT_PIN_3);
        GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, GPIO_INT_PIN_4);
-       GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, GPIO_INT_PIN_6);
+       //GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, GPIO_INT_PIN_6);
 
 
 
@@ -176,19 +176,18 @@ void inl_config(void)
 void int_config(void)
 {
     //Hall A sensor Interrupt
-    test = 100;
     SysCtlPeripheralEnable(DRV8323RS_HALLA_PERIPH);
     while(!SysCtlPeripheralReady(DRV8323RS_HALLA_PERIPH));
     GPIOIntRegister(DRV8323RS_HALLA_PORT, halla_int);
     GPIOPinTypeGPIOInput(DRV8323RS_HALLA_PORT, DRV8323RS_HALLA_PIN);
-    GPIOIntTypeSet(DRV8323RS_HALLA_PORT,DRV8323RS_HALLA_PIN,GPIO_BOTH_EDGES);
+    GPIOIntTypeSet(DRV8323RS_HALLA_PORT,DRV8323RS_HALLA_PIN,GPIO_RISING_EDGE);
     GPIOIntEnable(DRV8323RS_HALLA_PORT, DRV8323RS_HALLA_PIN);
 
 }
 
 void halla_int(void)
 {
-    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, !(GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_3)));
+    GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, !(GPIOPinRead(GPIO_PORTC_BASE, GPIO_PIN_6)));
 }
 
 void init(void)
