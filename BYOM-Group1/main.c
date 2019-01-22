@@ -26,7 +26,9 @@ uint16_t new_stuff;
 uint8_t addr = 0x02;
 uint32_t state;
 uint32_t notstate = 20;
-uint32_t test2 = 0;
+uint32_t testa = 0;
+uint32_t testb = 0;
+uint32_t testc = 0;
 
 
 int main(void)
@@ -46,6 +48,7 @@ int main(void)
 
        //GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_INT_PIN_3);
        GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, GPIO_INT_PIN_4);
+       //GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_2)
        //GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, GPIO_INT_PIN_6);
 
 
@@ -176,8 +179,23 @@ void inl_config(void)
 
 void halla_int(void)
 {
+    GPIOIntClear(DRV8323RS_HALLA_PORT, GPIO_INT_PIN_2);
     GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, !(GPIOPinRead(GPIO_PORTC_BASE, GPIO_PIN_6)));
-    test2 = 100;
+    testa = testa + 1;
+
+
+}
+
+void hallb_int(void)
+{
+    GPIOIntClear(DRV8323RS_HALLB_PORT, GPIO_INT_PIN_0);
+    testb = testb + 1;
+}
+
+void hallc_int(void)
+{
+    GPIOIntClear(DRV8323RS_HALLC_PORT, GPIO_INT_PIN_4);
+    testc = testc + 1;
 }
 
 void int_config(void)
@@ -189,8 +207,34 @@ void int_config(void)
 
     GPIOIntRegister(DRV8323RS_HALLA_PORT, halla_int);
     GPIOPinTypeGPIOInput(DRV8323RS_HALLA_PORT, DRV8323RS_HALLA_PIN);
-    GPIOIntTypeSet(DRV8323RS_HALLA_PORT,DRV8323RS_HALLA_PIN,GPIO_RISING_EDGE);
+    GPIOIntTypeSet(DRV8323RS_HALLA_PORT,DRV8323RS_HALLA_PIN,GPIO_BOTH_EDGES);
     GPIOIntEnable(DRV8323RS_HALLA_PORT, DRV8323RS_HALLA_PIN);
+
+    //IntRegister(DRV8323RS_HALLA_INT, halla_int);
+    //IntEnable(DRV8323RS_HALLA_INT);
+
+    SysCtlPeripheralEnable(DRV8323RS_HALLB_PERIPH);
+    while(!SysCtlPeripheralReady(DRV8323RS_HALLB_PERIPH));
+
+    GPIOIntRegister(DRV8323RS_HALLB_PORT, hallb_int);
+    GPIOPinTypeGPIOInput(DRV8323RS_HALLB_PORT, DRV8323RS_HALLB_PIN);
+    GPIOIntTypeSet(DRV8323RS_HALLB_PORT,DRV8323RS_HALLB_PIN,GPIO_BOTH_EDGES);
+    GPIOIntEnable(DRV8323RS_HALLB_PORT, DRV8323RS_HALLB_PIN);
+
+    SysCtlPeripheralEnable(DRV8323RS_HALLC_PERIPH);
+    while(!SysCtlPeripheralReady(DRV8323RS_HALLC_PERIPH));
+
+    GPIOIntRegister(DRV8323RS_HALLC_PORT, hallc_int);
+    GPIOPinTypeGPIOInput(DRV8323RS_HALLC_PORT, DRV8323RS_HALLC_PIN);
+    GPIOIntTypeSet(DRV8323RS_HALLC_PORT,DRV8323RS_HALLC_PIN,GPIO_BOTH_EDGES);
+    GPIOIntEnable(DRV8323RS_HALLC_PORT, DRV8323RS_HALLC_PIN);
+
+
+
+
+    IntMasterEnable();
+
+
 
 
 
@@ -208,6 +252,7 @@ void init(void)
     //SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
     inl_config();
     int_config();
+
 
 
 
