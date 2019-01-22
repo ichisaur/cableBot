@@ -14,26 +14,28 @@ void inl_config(void);
 void int_config(void);
 void adc_config(void);
 void read_adc(void);
+void Timer3AConfig(void);
 extern void halla_int(void);
 extern void hallb_int(void);
 extern void hallc_int(void);
+extern void Timer3Int(void);
 
 /**
  * main.c
  */
 
 int test = 0;
+uint16_t ArrayFlag=0;
 uint16_t stuff = 0x00;
 uint16_t new_stuff;
 uint8_t addr = 0x02;
-uint32_t state;
-uint32_t notstate = 20;
 uint32_t testa = 0;
 uint32_t testb = 0;
 uint32_t testc = 0;
 uint32_t ui32Value1;
 uint32_t ui32Value2;
 uint32_t ui32Value3;
+uint16_t Data[1500];
 
 
 int main(void)
@@ -48,10 +50,10 @@ int main(void)
        new_stuff = new_stuff | 0b0000000000100000;
        SPIWriteDRV8323(addr, new_stuff);
        new_stuff = SPIReadDRV8323(addr);
-       read_adc();
+       //read_adc();
 
 
-       //GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_INT_PIN_3);
+       //GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, !(GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_3)));
        //GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, GPIO_INT_PIN_4);
        //GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_2)
        //GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, GPIO_INT_PIN_6);
@@ -310,6 +312,32 @@ void read_adc(void)
     ADCSequenceDataGet(ADC0_BASE, 2, &ui32Value3);
 }
 
+void Timer3Int(void)
+{
+    static int ii;
+    TimerIntClear(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
+    if (ii<1499)
+    {
+        read_adc();
+        Data[ii]= ui32Value1;
+        ii++;
+    }
+    else
+    {
+        ArrayFlag = 1;
+    }
+}
+
+void Timer3AConfig(void)
+{
+    TimerLoadSet(TIMER3_BASE,TIMER_A,3200);
+    TimerIntRegister(TIMER3_BASE,TIMER_A, Timer3Int);
+    TimerIntEnable(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
+    TimerEnable(TIMER3_BASE, TIMER_A);
+}
+
+
+
 
 void init(void)
 {
@@ -321,5 +349,6 @@ void init(void)
     inl_config();
     int_config();
     adc_config();
+    Timer3AConfig();
 
 }
