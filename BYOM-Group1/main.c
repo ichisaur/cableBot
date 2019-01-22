@@ -12,6 +12,8 @@ void pwmb_config(void);
 void pwmc_config(void);
 void inl_config(void);
 void int_config(void);
+void adc_config(void);
+void read_adc(void);
 extern void halla_int(void);
 extern void hallb_int(void);
 extern void hallc_int(void);
@@ -29,6 +31,9 @@ uint32_t notstate = 20;
 uint32_t testa = 0;
 uint32_t testb = 0;
 uint32_t testc = 0;
+uint32_t ui32Value1;
+uint32_t ui32Value2;
+uint32_t ui32Value3;
 
 
 int main(void)
@@ -43,14 +48,13 @@ int main(void)
        new_stuff = new_stuff | 0b0000000000100000;
        SPIWriteDRV8323(addr, new_stuff);
        new_stuff = SPIReadDRV8323(addr);
-
+       read_adc();
 
 
        //GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_INT_PIN_3);
-       GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, GPIO_INT_PIN_4);
+       //GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, GPIO_INT_PIN_4);
        //GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_2)
        //GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, GPIO_INT_PIN_6);
-
 
 
     }
@@ -230,17 +234,81 @@ void int_config(void)
     GPIOIntEnable(DRV8323RS_HALLC_PORT, DRV8323RS_HALLC_PIN);
 
 
-
-
     IntMasterEnable();
-
-
-
-
 
 
 }
 
+void adc_config(void)
+{
+    SysCtlPeripheralEnable(DRV8323RS_ISENSE_ADC_PERIPH);
+    while(!SysCtlPeripheralReady(DRV8323RS_ISENSE_ADC_PERIPH));
+
+    SysCtlPeripheralEnable(DRV8323RS_ISENSEA_GPIO_PERIPH);
+    while(!SysCtlPeripheralReady(DRV8323RS_ISENSEA_GPIO_PERIPH));
+
+    GPIOPinTypeADC(DRV8323RS_ISENSEA_GPIO_PORT, DRV8323RS_ISENSEA_GPIO_PIN);
+
+    ADCSequenceConfigure(DRV8323RS_ISENSE_ADC_BASE, 0, ADC_TRIGGER_PROCESSOR,0);
+    ADCSequenceStepConfigure(DRV8323RS_ISENSE_ADC_BASE, 0, 0, ADC_CTL_IE | ADC_CTL_END | ADC_CTL_CH1);
+    ADCSequenceEnable(DRV8323RS_ISENSE_ADC_BASE, 0);
+
+    SysCtlPeripheralEnable(DRV8323RS_ISENSEB_GPIO_PERIPH);
+    while(!SysCtlPeripheralReady(DRV8323RS_ISENSEB_GPIO_PERIPH));
+
+    GPIOPinTypeADC(DRV8323RS_ISENSEB_GPIO_PORT, DRV8323RS_ISENSEB_GPIO_PIN);
+
+    ADCSequenceConfigure(DRV8323RS_ISENSE_ADC_BASE, 1, ADC_TRIGGER_PROCESSOR,0);
+    ADCSequenceStepConfigure(DRV8323RS_ISENSE_ADC_BASE, 1, 0,  ADC_CTL_IE | ADC_CTL_END | ADC_CTL_CH2);
+    ADCSequenceEnable(DRV8323RS_ISENSE_ADC_BASE, 1);
+
+    SysCtlPeripheralEnable(DRV8323RS_ISENSEC_GPIO_PERIPH);
+    while(!SysCtlPeripheralReady(DRV8323RS_ISENSEC_GPIO_PERIPH));
+
+    GPIOPinTypeADC(DRV8323RS_ISENSEC_GPIO_PORT, DRV8323RS_ISENSEC_GPIO_PIN);
+
+    ADCSequenceConfigure(DRV8323RS_ISENSE_ADC_BASE, 2, ADC_TRIGGER_PROCESSOR,0);
+    ADCSequenceStepConfigure(DRV8323RS_ISENSE_ADC_BASE, 2, 0,  ADC_CTL_IE | ADC_CTL_END | ADC_CTL_CH4);
+    ADCSequenceEnable(DRV8323RS_ISENSE_ADC_BASE, 2);
+
+}
+
+void read_adc(void)
+{
+    ADCProcessorTrigger(ADC0_BASE, 0);
+    //
+    // Wait until the sample sequence has completed.
+    //
+    while(!ADCIntStatus(ADC0_BASE, 0, false))
+    {
+    }
+    //
+    // Read the value from the ADC.
+    //
+    ADCSequenceDataGet(ADC0_BASE, 0, &ui32Value1);
+    ADCProcessorTrigger(ADC0_BASE, 1);
+    //
+    // Wait until the sample sequence has completed.
+    //
+    while(!ADCIntStatus(ADC0_BASE, 1, false))
+    {
+    }
+    //
+    // Read the value from the ADC.
+    //
+    ADCSequenceDataGet(ADC0_BASE, 1, &ui32Value2);
+    ADCProcessorTrigger(ADC0_BASE, 2);
+    //
+    // Wait until the sample sequence has completed.
+    //
+    while(!ADCIntStatus(ADC0_BASE, 2, false))
+    {
+    }
+    //
+    // Read the value from the ADC.
+    //
+    ADCSequenceDataGet(ADC0_BASE, 2, &ui32Value3);
+}
 
 
 void init(void)
@@ -252,9 +320,6 @@ void init(void)
     //SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
     inl_config();
     int_config();
-
-
-
-
+    adc_config();
 
 }
