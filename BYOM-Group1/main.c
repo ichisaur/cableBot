@@ -119,7 +119,7 @@ void pwmb_config(void)
     GPIOPinTypeTimer(DRV8323RS_PWMB_GPIO_PORT, DRV8323RS_PWMB_GPIO_PIN);
 
     // Configure TimerB as a periodic timer
-    TimerConfigure(DRV8323RS_PWMB_BASE, (TIMER_CFG_SPLIT_PAIR |
+    TimerConfigure(DRV8323RS_PWMB_BASE, (TIMER_CFG_SPLIT_PAIR |TIMER_CFG_A_PERIODIC |
             TIMER_CFG_B_PWM));
     //set count time/period
     TimerLoadSet(DRV8323RS_PWMB_BASE, DRV8323RS_PWMB_TIMER, PWM_PERIOD);
