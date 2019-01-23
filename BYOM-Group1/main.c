@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdarg.h>
 #include <drv8323rs.h>
@@ -45,6 +46,7 @@ uint16_t Data[1500];
 uint8_t halla_state = 0x04;
 uint8_t hallb_state = 0;
 uint8_t hallc_state = 0x10;
+volatile uint8_t commState= 0;
 
 
 int main(void)
@@ -54,8 +56,9 @@ int main(void)
 
     InitDRV8323RS();
     commutate();
-    while(1){
-       UARTprintf("hello\r\n");
+    UARTprintf("data\r\n");
+    while(!ArrayFlag){
+//       UARTprintf("hello\r\n");
        new_stuff = SPIReadDRV8323(addr);
        new_stuff = new_stuff & 0b1111111110011111;
        new_stuff = new_stuff | 0b0000000000100000;
@@ -71,6 +74,10 @@ int main(void)
 
 
     }
+int jj;
+for(jj=0; jj<1500; jj++){
+    UARTprintf("%d\r\n",Data[jj]);
+}
     return 0;
 }
 void pwma_config(void)
@@ -259,6 +266,7 @@ void commutate(void)
         pwma(1);
         pwmb(1);
         pwmc(15);
+        commState = 3;
     }
     else if(halla_state == 0x04 && hallb_state == 0 && hallc_state == 0){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
@@ -267,6 +275,7 @@ void commutate(void)
         pwma(1);
         pwmb(1);
         pwmc(15);
+        commState = 3;
     }
     else if(halla_state == 0x04 && hallb_state == 1 && hallc_state == 0){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
@@ -275,6 +284,7 @@ void commutate(void)
         pwma(1);
         pwmb(15);
         pwmc(1);
+        commState = 2;
     }
     else if(halla_state == 0 && hallb_state == 1 && hallc_state == 0){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,0);
@@ -283,7 +293,7 @@ void commutate(void)
         pwma(1);
         pwmb(15);
         pwmc(1);
-
+        commState = 2;
     }
     else if(halla_state == 0 && hallb_state == 1 && hallc_state == 0x10 ){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
@@ -292,6 +302,7 @@ void commutate(void)
         pwma(15);
         pwmb(1);
         pwmc(1);
+        commState = 1;
     }
     else if(halla_state == 0 && hallb_state == 0 && hallc_state == 0x10){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
@@ -300,6 +311,7 @@ void commutate(void)
         pwma(15);
         pwmb(1);
         pwmc(1);
+        commState = 1;
     }
 }
 
@@ -419,7 +431,14 @@ void Timer3Int(void)
     if (ii<1499)
     {
         read_adc();
-        Data[ii]= ui32Value1;
+        if (commState == 1)
+        {
+            Data[ii]= ui32Value1;
+        } else if (commState == 2) {
+            Data[ii] = ui32Value2;
+        } else if (commState == 3) {
+            Data[ii] = ui32Value3;
+        }
         ii++;
     }
     else
@@ -471,7 +490,7 @@ void InitConsole(void)
     //
     // Initialize the UART for console I/O.
     //
-    UARTStdioConfig(0, 115200, 16000000);
+    UARTStdioConfig(0, 115200, SysCtlClockGet());
 }
 
 
