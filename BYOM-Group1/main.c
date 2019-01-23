@@ -10,11 +10,15 @@ void init(void);
 void pwma_config(void);
 void pwmb_config(void);
 void pwmc_config(void);
+void pwma(int duty);
+void pwmb(int duty);
+void pwmc(int duty);
 void inl_config(void);
 void int_config(void);
 void adc_config(void);
 void read_adc(void);
 void Timer3AConfig(void);
+void commutate(void);
 extern void halla_int(void);
 extern void hallb_int(void);
 extern void hallc_int(void);
@@ -36,6 +40,9 @@ uint32_t ui32Value1;
 uint32_t ui32Value2;
 uint32_t ui32Value3;
 uint16_t Data[1500];
+uint8_t halla_state = 0x04;
+uint8_t hallb_state = 0;
+uint8_t hallc_state = 0x10;
 
 
 int main(void)
@@ -44,6 +51,7 @@ int main(void)
     init();
 
     InitDRV8323RS();
+    commutate();
     while(1){
        new_stuff = SPIReadDRV8323(addr);
        new_stuff = new_stuff & 0b1111111110011111;
@@ -87,7 +95,7 @@ void pwma_config(void)
         PWMGenPeriodSet(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_GEN, PWM_PERIOD);
 
         // Set the PWM duty cycle to 33%
-        PWMPulseWidthSet(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_OUT, 133);
+        PWMPulseWidthSet(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_OUT, 1);
 
         // Enable the PWM generator
         PWMGenEnable(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_GEN);
@@ -127,7 +135,7 @@ void pwmb_config(void)
     TimerLoadSet(DRV8323RS_PWMB_BASE, DRV8323RS_PWMB_TIMER, PWM_PERIOD);
     TimerControlLevel(DRV8323RS_PWMB_BASE,DRV8323RS_PWMB_TIMER,true);
     //set duty cycle
-    TimerMatchSet(DRV8323RS_PWMB_BASE, DRV8323RS_PWMB_TIMER, 133);
+    TimerMatchSet(DRV8323RS_PWMB_BASE, DRV8323RS_PWMB_TIMER, 1);
     TimerEnable(DRV8323RS_PWMB_BASE, TIMER_B);
 }
 
@@ -156,13 +164,39 @@ void pwmc_config(void)
         PWMGenPeriodSet(DRV8323RS_PWMC_BASE, DRV8323RS_PWMC_GEN, PWM_PERIOD);
 
         // Set the PWM duty cycle to 33%
-        PWMPulseWidthSet(DRV8323RS_PWMC_BASE, DRV8323RS_PWMC_OUT, 133);
+        PWMPulseWidthSet(DRV8323RS_PWMC_BASE, DRV8323RS_PWMC_OUT, 1);
 
         // Enable the PWM generator
         PWMGenEnable(DRV8323RS_PWMC_BASE, DRV8323RS_PWMC_GEN);
 
         // Turn on the PWM output pin
         PWMOutputState(DRV8323RS_PWMC_BASE, DRV8323RS_PWMC_OUT_BIT,true);
+
+}
+
+void pwma(int duty){
+    PWMPulseWidthSet(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_OUT, (duty/100.0)*399+1);
+    // Enable the PWM generator
+    PWMGenEnable(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_GEN);
+    // Turn on the PWM output pin
+    PWMOutputState(DRV8323RS_PWMA_BASE, DRV8323RS_PWMA_OUT_BIT,true);
+}
+
+void pwmb(int duty){
+    TimerDisable(DRV8323RS_PWMB_BASE, TIMER_B);
+    TimerMatchSet(DRV8323RS_PWMB_BASE, DRV8323RS_PWMB_TIMER, (duty/100.0)*399+1);
+    TimerEnable(DRV8323RS_PWMB_BASE, TIMER_B);
+}
+
+void pwmc(int duty){
+    // Set the PWM duty cycle to 33%
+    PWMPulseWidthSet(DRV8323RS_PWMC_BASE, DRV8323RS_PWMC_OUT, (duty/100.0)*399+1);
+
+    // Enable the PWM generator
+    PWMGenEnable(DRV8323RS_PWMC_BASE, DRV8323RS_PWMC_GEN);
+
+    // Turn on the PWM output pin
+    PWMOutputState(DRV8323RS_PWMC_BASE, DRV8323RS_PWMC_OUT_BIT,true);
 
 }
 
@@ -186,23 +220,86 @@ void inl_config(void)
 void halla_int(void)
 {
     GPIOIntClear(DRV8323RS_HALLA_PORT, GPIO_INT_PIN_2);
-    GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_6, !(GPIOPinRead(GPIO_PORTC_BASE, GPIO_PIN_6)));
+    halla_state = GPIOPinRead(DRV8323RS_HALLA_PORT, DRV8323RS_HALLA_PIN);
+    hallb_state = GPIOPinRead(DRV8323RS_HALLB_PORT, DRV8323RS_HALLB_PIN);
+    hallc_state = GPIOPinRead(DRV8323RS_HALLC_PORT, DRV8323RS_HALLC_PIN);
+    commutate();
     testa = testa + 1;
-
-
 }
 
 void hallb_int(void)
 {
     GPIOIntClear(DRV8323RS_HALLB_PORT, GPIO_INT_PIN_0);
+    halla_state = GPIOPinRead(DRV8323RS_HALLA_PORT, DRV8323RS_HALLA_PIN);
+    hallb_state = GPIOPinRead(DRV8323RS_HALLB_PORT, DRV8323RS_HALLB_PIN);
+    hallc_state = GPIOPinRead(DRV8323RS_HALLC_PORT, DRV8323RS_HALLC_PIN);
+    commutate();
     testb = testb + 1;
 }
 
 void hallc_int(void)
 {
     GPIOIntClear(DRV8323RS_HALLC_PORT, GPIO_INT_PIN_4);
+    halla_state = GPIOPinRead(DRV8323RS_HALLA_PORT, DRV8323RS_HALLA_PIN);
+    hallb_state = GPIOPinRead(DRV8323RS_HALLB_PORT, DRV8323RS_HALLB_PIN);
+    hallc_state = GPIOPinRead(DRV8323RS_HALLC_PORT, DRV8323RS_HALLC_PIN);
+    commutate();
     testc = testc + 1;
 }
+
+void commutate(void)
+{
+    if(halla_state == 0x04 && hallb_state == 0 && hallc_state == 0x10){
+        GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,0);
+        GPIOPinWrite(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN,GPIO_INT_PIN_4);
+        GPIOPinWrite(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN,GPIO_INT_PIN_6);
+        pwma(1);
+        pwmb(1);
+        pwmc(15);
+    }
+    else if(halla_state == 0x04 && hallb_state == 0 && hallc_state == 0){
+        GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
+        GPIOPinWrite(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN,0);
+        GPIOPinWrite(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN,GPIO_INT_PIN_6);
+        pwma(1);
+        pwmb(1);
+        pwmc(15);
+    }
+    else if(halla_state == 0x04 && hallb_state == 1 && hallc_state == 0){
+        GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
+        GPIOPinWrite(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN,GPIO_INT_PIN_4);
+        GPIOPinWrite(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN,0);
+        pwma(1);
+        pwmb(15);
+        pwmc(1);
+    }
+    else if(halla_state == 0 && hallb_state == 1 && hallc_state == 0){
+        GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,0);
+        GPIOPinWrite(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN,GPIO_INT_PIN_4);
+        GPIOPinWrite(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN,GPIO_INT_PIN_6);
+        pwma(1);
+        pwmb(15);
+        pwmc(1);
+
+    }
+    else if(halla_state == 0 && hallb_state == 1 && hallc_state == 0x10 ){
+        GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
+        GPIOPinWrite(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN,0);
+        GPIOPinWrite(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN,GPIO_INT_PIN_6);
+        pwma(15);
+        pwmb(1);
+        pwmc(1);
+    }
+    else if(halla_state == 0 && hallb_state == 0 && hallc_state == 0x10){
+        GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
+        GPIOPinWrite(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN,GPIO_INT_PIN_4);
+        GPIOPinWrite(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN,0);
+        pwma(15);
+        pwmb(1);
+        pwmc(1);
+    }
+}
+
 
 void int_config(void)
 {
@@ -350,5 +447,4 @@ void init(void)
     int_config();
     adc_config();
     Timer3AConfig();
-
 }
