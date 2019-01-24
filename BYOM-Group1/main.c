@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <drv8323rs.h>
 #include "driverlib/uart.h"
+#include "uartstdio.h"
 
 #define PWM_PERIOD 399
 
@@ -42,11 +43,13 @@ uint32_t testc = 0;
 uint32_t ui32Value1;
 uint32_t ui32Value2;
 uint32_t ui32Value3;
-uint16_t Data[1500];
+uint16_t Data[15000];
 uint8_t halla_state = 0x04;
 uint8_t hallb_state = 0;
 uint8_t hallc_state = 0x10;
 volatile uint8_t commState= 0;
+volatile uint32_t arrayIndex = 0;
+volatile uint16_t hallState = 0b000;
 
 
 int main(void)
@@ -56,9 +59,9 @@ int main(void)
 
     InitDRV8323RS();
     commutate();
-    UARTprintf("data\r\n");
+
     while(!ArrayFlag){
-//       UARTprintf("hello\r\n");
+       //UARTprintf("hello\r\n");
        new_stuff = SPIReadDRV8323(addr);
        new_stuff = new_stuff & 0b1111111110011111;
        new_stuff = new_stuff | 0b0000000000100000;
@@ -74,9 +77,12 @@ int main(void)
 
 
     }
+    UARTprintf("vSense, Hall State\r\n");
 int jj;
-for(jj=0; jj<1500; jj++){
-    UARTprintf("%d\r\n",Data[jj]);
+for(jj=0; jj<15000; jj++){
+    int currState = Data[jj] & (0b111);
+    int vSense = Data[jj] >> 3;
+    UARTprintf("%d, %d\r\n", vSense, currState);
 }
     return 0;
 }
@@ -225,36 +231,41 @@ void inl_config(void)
     SysCtlPeripheralEnable(DRV8323RS_INLC_PERIPH);
     while(!SysCtlPeripheralReady(DRV8323RS_INLC_PERIPH));
     GPIOPinTypeGPIOOutput(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN);
+
+
 }
 
 void halla_int(void)
 {
-    GPIOIntClear(DRV8323RS_HALLA_PORT, GPIO_INT_PIN_2);
+
     halla_state = GPIOPinRead(DRV8323RS_HALLA_PORT, DRV8323RS_HALLA_PIN);
     hallb_state = GPIOPinRead(DRV8323RS_HALLB_PORT, DRV8323RS_HALLB_PIN);
     hallc_state = GPIOPinRead(DRV8323RS_HALLC_PORT, DRV8323RS_HALLC_PIN);
     commutate();
     testa = testa + 1;
+    GPIOIntClear(DRV8323RS_HALLA_PORT, GPIO_INT_PIN_2);
 }
 
 void hallb_int(void)
 {
-    GPIOIntClear(DRV8323RS_HALLB_PORT, GPIO_INT_PIN_0);
+
     halla_state = GPIOPinRead(DRV8323RS_HALLA_PORT, DRV8323RS_HALLA_PIN);
     hallb_state = GPIOPinRead(DRV8323RS_HALLB_PORT, DRV8323RS_HALLB_PIN);
     hallc_state = GPIOPinRead(DRV8323RS_HALLC_PORT, DRV8323RS_HALLC_PIN);
     commutate();
     testb = testb + 1;
+    GPIOIntClear(DRV8323RS_HALLB_PORT, GPIO_INT_PIN_0);
 }
 
 void hallc_int(void)
 {
-    GPIOIntClear(DRV8323RS_HALLC_PORT, GPIO_INT_PIN_4);
+
     halla_state = GPIOPinRead(DRV8323RS_HALLA_PORT, DRV8323RS_HALLA_PIN);
     hallb_state = GPIOPinRead(DRV8323RS_HALLB_PORT, DRV8323RS_HALLB_PIN);
     hallc_state = GPIOPinRead(DRV8323RS_HALLC_PORT, DRV8323RS_HALLC_PIN);
     commutate();
     testc = testc + 1;
+    GPIOIntClear(DRV8323RS_HALLC_PORT, GPIO_INT_PIN_4);
 }
 
 void commutate(void)
@@ -267,6 +278,7 @@ void commutate(void)
         pwmb(1);
         pwmc(15);
         commState = 3;
+        hallState = 0;
     }
     else if(halla_state == 0x04 && hallb_state == 0 && hallc_state == 0){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
@@ -276,6 +288,7 @@ void commutate(void)
         pwmb(1);
         pwmc(15);
         commState = 3;
+        hallState = 1;
     }
     else if(halla_state == 0x04 && hallb_state == 1 && hallc_state == 0){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
@@ -285,6 +298,7 @@ void commutate(void)
         pwmb(15);
         pwmc(1);
         commState = 2;
+        hallState = 2;
     }
     else if(halla_state == 0 && hallb_state == 1 && hallc_state == 0){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,0);
@@ -294,6 +308,7 @@ void commutate(void)
         pwmb(15);
         pwmc(1);
         commState = 2;
+        hallState = 3;
     }
     else if(halla_state == 0 && hallb_state == 1 && hallc_state == 0x10 ){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
@@ -303,6 +318,7 @@ void commutate(void)
         pwmb(1);
         pwmc(1);
         commState = 1;
+        hallState = 4;
     }
     else if(halla_state == 0 && hallb_state == 0 && hallc_state == 0x10){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
@@ -312,7 +328,10 @@ void commutate(void)
         pwmb(1);
         pwmc(1);
         commState = 1;
+        hallState = 5;
     }
+
+
 }
 
 
@@ -396,60 +415,68 @@ void read_adc(void)
     while(!ADCIntStatus(ADC0_BASE, 0, false))
     {
     }
-    //
-    // Read the value from the ADC.
-    //
-    ADCSequenceDataGet(ADC0_BASE, 0, &ui32Value1);
-    ADCProcessorTrigger(ADC0_BASE, 1);
-    //
-    // Wait until the sample sequence has completed.
-    //
-    while(!ADCIntStatus(ADC0_BASE, 1, false))
-    {
-    }
-    //
-    // Read the value from the ADC.
-    //
-    ADCSequenceDataGet(ADC0_BASE, 1, &ui32Value2);
-    ADCProcessorTrigger(ADC0_BASE, 2);
-    //
-    // Wait until the sample sequence has completed.
-    //
-    while(!ADCIntStatus(ADC0_BASE, 2, false))
-    {
-    }
-    //
-    // Read the value from the ADC.
-    //
-    ADCSequenceDataGet(ADC0_BASE, 2, &ui32Value3);
+    //if (commState == 1) {
+        //
+        // Read the value from the ADC.
+        //
+        ADCSequenceDataGet(ADC0_BASE, 0, &ui32Value1);
+        ADCProcessorTrigger(ADC0_BASE, 1);
+        //
+        // Wait until the sample sequence has completed.
+        //
+        while(!ADCIntStatus(ADC0_BASE, 1, false))
+        {
+        }
+    //} else if (commState == 2) {
+        //
+        // Read the value from the ADC.
+        //
+        ADCSequenceDataGet(ADC0_BASE, 1, &ui32Value2);
+        ADCProcessorTrigger(ADC0_BASE, 2);
+        //
+        // Wait until the sample sequence has completed.
+        //
+        while(!ADCIntStatus(ADC0_BASE, 2, false))
+        {
+        }
+    //} else if (commState == 3) {
+        //
+        // Read the value from the ADC.
+        //
+        ADCSequenceDataGet(ADC0_BASE, 2, &ui32Value3);
+    //}
+
 }
 
 void Timer3Int(void)
 {
-    static int ii;
-    TimerIntClear(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
-    if (ii<1499)
+
+    GPIOPinWrite(GPIO_PORTB_BASE, GPIO_PIN_0, !(GPIOPinRead(GPIO_PORTB_BASE, GPIO_PIN_0)));
+
+    if (arrayIndex<15000)
     {
         read_adc();
         if (commState == 1)
         {
-            Data[ii]= ui32Value1;
+            Data[arrayIndex] = (ui32Value1 << 3) | hallState;
+            //Data[ii] = ui32Value1;
         } else if (commState == 2) {
-            Data[ii] = ui32Value2;
+            Data[arrayIndex] = (ui32Value2 << 3) | hallState;
         } else if (commState == 3) {
-            Data[ii] = ui32Value3;
+            Data[arrayIndex] = (ui32Value3 << 3) | hallState;
         }
-        ii++;
+        arrayIndex++;
     }
     else
     {
         ArrayFlag = 1;
     }
+    TimerIntClear(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
 }
 
 void Timer3AConfig(void)
 {
-    TimerLoadSet(TIMER3_BASE,TIMER_A,3200);
+    TimerLoadSet(TIMER3_BASE,TIMER_A,3199);
     TimerIntRegister(TIMER3_BASE,TIMER_A, Timer3Int);
     TimerIntEnable(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
     TimerEnable(TIMER3_BASE, TIMER_A);
@@ -507,5 +534,7 @@ void init(void)
     adc_config();
     Timer3AConfig();
     InitConsole();
+    //IntPrioritySet(INT_TIMER3A, 0x80);
+    GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_0);
 }
 
