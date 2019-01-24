@@ -7,6 +7,7 @@
 #include "uartstdio.h"
 
 #define PWM_PERIOD 399
+#define PWM_SPEED 8
 
 
 void init(void);
@@ -33,20 +34,20 @@ extern void Timer3Int(void);
  */
 
 int test = 0;
-uint16_t ArrayFlag=0;
+volatile uint16_t ArrayFlag=0;
 uint16_t stuff = 0x00;
 uint16_t new_stuff;
 uint8_t addr = 0x02;
-uint32_t testa = 0;
-uint32_t testb = 0;
-uint32_t testc = 0;
-uint32_t ui32Value1;
-uint32_t ui32Value2;
-uint32_t ui32Value3;
-uint16_t Data[15000];
-uint8_t halla_state = 0x04;
-uint8_t hallb_state = 0;
-uint8_t hallc_state = 0x10;
+//uint32_t testa = 0;
+//uint32_t testb = 0;
+//uint32_t testc = 0;
+volatile uint32_t ui32Value1;
+volatile uint32_t ui32Value2;
+volatile uint32_t ui32Value3;
+volatile uint16_t Data[15000];
+volatile uint8_t halla_state = 0x04;
+volatile uint8_t hallb_state = 0;
+volatile uint8_t hallc_state = 0x10;
 volatile uint8_t commState= 0;
 volatile uint32_t arrayIndex = 0;
 volatile uint16_t hallState = 0b000;
@@ -242,7 +243,7 @@ void halla_int(void)
     hallb_state = GPIOPinRead(DRV8323RS_HALLB_PORT, DRV8323RS_HALLB_PIN);
     hallc_state = GPIOPinRead(DRV8323RS_HALLC_PORT, DRV8323RS_HALLC_PIN);
     commutate();
-    testa = testa + 1;
+    //testa = testa + 1;
     GPIOIntClear(DRV8323RS_HALLA_PORT, GPIO_INT_PIN_2);
 }
 
@@ -253,7 +254,7 @@ void hallb_int(void)
     hallb_state = GPIOPinRead(DRV8323RS_HALLB_PORT, DRV8323RS_HALLB_PIN);
     hallc_state = GPIOPinRead(DRV8323RS_HALLC_PORT, DRV8323RS_HALLC_PIN);
     commutate();
-    testb = testb + 1;
+    //testb = testb + 1;
     GPIOIntClear(DRV8323RS_HALLB_PORT, GPIO_INT_PIN_0);
 }
 
@@ -264,72 +265,79 @@ void hallc_int(void)
     hallb_state = GPIOPinRead(DRV8323RS_HALLB_PORT, DRV8323RS_HALLB_PIN);
     hallc_state = GPIOPinRead(DRV8323RS_HALLC_PORT, DRV8323RS_HALLC_PIN);
     commutate();
-    testc = testc + 1;
+    //testc = testc + 1;
     GPIOIntClear(DRV8323RS_HALLC_PORT, GPIO_INT_PIN_4);
 }
 
 void commutate(void)
 {
-    if(halla_state == 0x04 && hallb_state == 0 && hallc_state == 0x10){
+    if(halla_state != 0 && hallb_state == 0 && hallc_state != 0){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,0);
         GPIOPinWrite(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN,GPIO_INT_PIN_4);
         GPIOPinWrite(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN,GPIO_INT_PIN_6);
         pwma(1);
         pwmb(1);
-        pwmc(15);
+        pwmc(PWM_SPEED);
         commState = 3;
         hallState = 0;
     }
-    else if(halla_state == 0x04 && hallb_state == 0 && hallc_state == 0){
+    else if(halla_state != 0 && hallb_state == 0 && hallc_state == 0){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
         GPIOPinWrite(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN,0);
         GPIOPinWrite(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN,GPIO_INT_PIN_6);
         pwma(1);
         pwmb(1);
-        pwmc(15);
+        pwmc(PWM_SPEED);
         commState = 3;
         hallState = 1;
     }
-    else if(halla_state == 0x04 && hallb_state == 1 && hallc_state == 0){
+    else if(halla_state != 0 && hallb_state != 0 && hallc_state == 0){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
         GPIOPinWrite(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN,GPIO_INT_PIN_4);
         GPIOPinWrite(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN,0);
         pwma(1);
-        pwmb(15);
+        pwmb(PWM_SPEED);
         pwmc(1);
         commState = 2;
         hallState = 2;
     }
-    else if(halla_state == 0 && hallb_state == 1 && hallc_state == 0){
+    else if(halla_state == 0 && hallb_state != 0 && hallc_state == 0){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,0);
         GPIOPinWrite(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN,GPIO_INT_PIN_4);
         GPIOPinWrite(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN,GPIO_INT_PIN_6);
         pwma(1);
-        pwmb(15);
+        pwmb(PWM_SPEED);
         pwmc(1);
         commState = 2;
         hallState = 3;
     }
-    else if(halla_state == 0 && hallb_state == 1 && hallc_state == 0x10 ){
+    else if(halla_state == 0 && hallb_state != 0 && hallc_state != 0 ){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
         GPIOPinWrite(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN,0);
         GPIOPinWrite(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN,GPIO_INT_PIN_6);
-        pwma(15);
+        pwma(PWM_SPEED);
         pwmb(1);
         pwmc(1);
         commState = 1;
         hallState = 4;
     }
-    else if(halla_state == 0 && hallb_state == 0 && hallc_state == 0x10){
+    else if(halla_state == 0 && hallb_state == 0 && hallc_state != 0){
         GPIOPinWrite(DRV8323RS_INLA_PORT, DRV8323RS_INLA_PIN,GPIO_INT_PIN_3);
         GPIOPinWrite(DRV8323RS_INLB_PORT, DRV8323RS_INLB_PIN,GPIO_INT_PIN_4);
         GPIOPinWrite(DRV8323RS_INLC_PORT, DRV8323RS_INLC_PIN,0);
-        pwma(15);
+        pwma(PWM_SPEED);
         pwmb(1);
         pwmc(1);
         commState = 1;
         hallState = 5;
+
     }
+
+    else {
+        UARTprintf("wtf \r\n");
+    }
+
+    //UARTprintf("%d %d %d %d\r\n", halla_state >> 2, hallb_state, hallc_state >>4, hallState);
 
 
 }
@@ -373,6 +381,7 @@ void int_config(void)
 }
 
 void adc_config(void)
+
 {
     SysCtlPeripheralEnable(DRV8323RS_ISENSE_ADC_PERIPH);
     while(!SysCtlPeripheralReady(DRV8323RS_ISENSE_ADC_PERIPH));
@@ -393,7 +402,7 @@ void adc_config(void)
 
     ADCSequenceConfigure(DRV8323RS_ISENSE_ADC_BASE, 1, ADC_TRIGGER_PROCESSOR,0);
     ADCSequenceStepConfigure(DRV8323RS_ISENSE_ADC_BASE, 1, 0,  ADC_CTL_IE | ADC_CTL_END | ADC_CTL_CH2);
-    ADCSequenceEnable(DRV8323RS_ISENSE_ADC_BASE, 1);
+    ADCSequenceEnable(DRV8323RS_ISENSE_ADC_BASE, 1); //also or together other adc channel pins, use channel 1, and sequence 0-2
 
     SysCtlPeripheralEnable(DRV8323RS_ISENSEC_GPIO_PERIPH);
     while(!SysCtlPeripheralReady(DRV8323RS_ISENSEC_GPIO_PERIPH));
