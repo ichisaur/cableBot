@@ -22960,7 +22960,7 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <attribute name="DESIGNER" value="CableBot"/>
 </part>
 <part name="GND10" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="U$1" library="ZX62-AB-5PA_11_" deviceset="ZX62MICROUSB" device=""/>
+<part name="USB" library="ZX62-AB-5PA_11_" deviceset="ZX62MICROUSB" device=""/>
 <part name="GND11" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="C13" library="adafruit" library_urn="urn:adsk.eagle:library:420" deviceset="C-US" device="C0805" package3d_urn="urn:adsk.eagle:package:6240337/1" value="0.1uF"/>
 <part name="C14" library="adafruit" library_urn="urn:adsk.eagle:library:420" deviceset="C-US" device="C0805" package3d_urn="urn:adsk.eagle:package:6240337/1" value="10uF"/>
@@ -24388,7 +24388,7 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <instance part="GND10" gate="1" x="58.42" y="68.58" smashed="yes">
 <attribute name="VALUE" x="58.42" y="68.326" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="U$1" gate="G$1" x="25.4" y="134.62" smashed="yes">
+<instance part="USB" gate="G$1" x="25.4" y="134.62" smashed="yes">
 <attribute name="NAME" x="29.21341875" y="132.07771875" size="1.7796" layer="95"/>
 </instance>
 <instance part="GND11" gate="1" x="17.78" y="124.46" smashed="yes">
@@ -24586,7 +24586,7 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <label x="50.8" y="109.22" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U$1" gate="G$1" pin="D+"/>
+<pinref part="USB" gate="G$1" pin="D+"/>
 <wire x1="20.32" y1="132.08" x2="20.32" y2="127" width="0.1524" layer="91"/>
 <label x="20.32" y="127" size="1.778" layer="95" rot="R90"/>
 </segment>
@@ -24598,7 +24598,7 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <label x="50.8" y="111.76" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="U$1" gate="G$1" pin="D-"/>
+<pinref part="USB" gate="G$1" pin="D-"/>
 <wire x1="22.86" y1="132.08" x2="22.86" y2="127" width="0.1524" layer="91"/>
 <label x="22.86" y="127" size="1.778" layer="95" rot="R90"/>
 </segment>
@@ -24639,7 +24639,7 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <pinref part="GND10" gate="1" pin="GND"/>
 </segment>
 <segment>
-<pinref part="U$1" gate="G$1" pin="GND"/>
+<pinref part="USB" gate="G$1" pin="GND"/>
 <wire x1="17.78" y1="132.08" x2="17.78" y2="127" width="0.1524" layer="91"/>
 <pinref part="GND11" gate="1" pin="GND"/>
 </segment>
@@ -25038,7 +25038,7 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 </net>
 <net name="V_USB" class="0">
 <segment>
-<pinref part="U$1" gate="G$1" pin="VCC"/>
+<pinref part="USB" gate="G$1" pin="VCC"/>
 <wire x1="25.4" y1="132.08" x2="25.4" y2="127" width="0.1524" layer="91"/>
 <pinref part="SUPPLY3" gate="G$1" pin="V_USB"/>
 </segment>
