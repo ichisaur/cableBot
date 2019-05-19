@@ -2251,7 +2251,7 @@ DIN A4, landscape with location and doc. field</description>
 <part name="J1" library="CabelBot" deviceset="CONN_03" device="" package3d_urn="urn:adsk.eagle:package:38063/1"/>
 <part name="U$2" library="CabelBot" deviceset="GND" device=""/>
 <part name="U$3" library="CabelBot" deviceset="3.3V" device=""/>
-<part name="R1" library="CabelBot" deviceset="RESISTOR" device="_0603"/>
+<part name="R1" library="CabelBot" deviceset="RESISTOR" device="_0603" value="10k"/>
 <part name="U$4" library="CabelBot" deviceset="GND" device=""/>
 </parts>
 <sheets>
