@@ -2263,6 +2263,24 @@
 <text x="-6" y="10" size="1.27" layer="25">&gt;NAME</text>
 <text x="-6" y="8.5" size="1.27" layer="27">&gt;VALUE</text>
 </package>
+<package name="ENDTIVA">
+<wire x1="2.54" y1="0" x2="15.24" y2="0" width="0.127" layer="21"/>
+<wire x1="15.24" y1="0" x2="17.78" y2="2.54" width="0.127" layer="21" curve="90"/>
+<wire x1="17.78" y1="2.54" x2="17.78" y2="27.94" width="0.127" layer="21"/>
+<wire x1="17.78" y1="27.94" x2="15.24" y2="30.48" width="0.127" layer="21" curve="90"/>
+<wire x1="15.24" y1="30.48" x2="2.54" y2="30.48" width="0.127" layer="21"/>
+<wire x1="2.54" y1="30.48" x2="0" y2="27.94" width="0.127" layer="21" curve="90"/>
+<wire x1="0" y1="27.94" x2="0" y2="2.54" width="0.127" layer="21"/>
+<wire x1="0" y1="2.54" x2="2.54" y2="0" width="0.127" layer="21" curve="90"/>
+<pad name="P$1" x="3.81" y="27.94" drill="1" diameter="1.9304"/>
+<pad name="P$2" x="6.35" y="27.94" drill="1" diameter="1.9304"/>
+<pad name="P$3" x="8.89" y="27.94" drill="1" diameter="1.9304"/>
+<pad name="P$4" x="11.43" y="27.94" drill="1" diameter="1.9304"/>
+<pad name="P$5" x="13.97" y="27.94" drill="1" diameter="1.9304"/>
+<pad name="GND" x="6.35" y="2.54" drill="1" diameter="1.9304"/>
+<pad name="3.3V" x="8.89" y="2.54" drill="1" diameter="1.9304"/>
+<pad name="DIO" x="11.43" y="2.54" drill="1" diameter="1.9304"/>
+</package>
 </packages>
 <symbols>
 <symbol name="TM4C123GH6PMI">
@@ -2414,6 +2432,17 @@
 <wire x1="7.62" y1="0" x2="0" y2="0" width="0.254" layer="94"/>
 <text x="0" y="-2.54" size="1.778" layer="95">&gt;NAME</text>
 <text x="0" y="-5.08" size="1.778" layer="96">&gt;VALUE</text>
+</symbol>
+<symbol name="ENDTIVA">
+<pin name="DIO" x="12.7" y="2.54" visible="pin" length="short" rot="R180"/>
+<pin name="3.3V" x="12.7" y="5.08" visible="pin" length="short" rot="R180"/>
+<pin name="GND" x="12.7" y="7.62" visible="pin" length="short" rot="R180"/>
+<wire x1="0" y1="0" x2="10.16" y2="0" width="0.254" layer="94"/>
+<wire x1="10.16" y1="0" x2="10.16" y2="10.16" width="0.254" layer="94"/>
+<wire x1="10.16" y1="10.16" x2="0" y2="10.16" width="0.254" layer="94"/>
+<wire x1="0" y1="10.16" x2="0" y2="0" width="0.254" layer="94"/>
+<text x="0" y="-2.54" size="1.27" layer="95">&gt;NAME</text>
+<text x="0" y="-5.08" size="1.27" layer="96">&gt;VALUE</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -2871,6 +2900,23 @@
 <connect gate="G$1" pin="3" pad="3"/>
 <connect gate="G$1" pin="4" pad="4"/>
 <connect gate="G$1" pin="5" pad="5"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="ENDTIVA">
+<gates>
+<gate name="G$1" symbol="ENDTIVA" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="ENDTIVA">
+<connects>
+<connect gate="G$1" pin="3.3V" pad="3.3V"/>
+<connect gate="G$1" pin="DIO" pad="DIO"/>
+<connect gate="G$1" pin="GND" pad="GND"/>
 </connects>
 <technologies>
 <technology name=""/>
