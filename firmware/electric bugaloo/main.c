@@ -157,7 +157,7 @@ UARTIntHandler(void)
 
     // process string for variables
     // TODO: processing the hwType char doesnt work. May not needed, hard program in based on hwID
-    sscanf(myInput, "%1i %1c %i %i", &hwID, hwType, &param1, &param2);
+    sscanf(myInput, "%1i %1c %i %i", &hwID, &hwType, &param1, &param2);
 
 
     // Hardcoded implementation of placing it in myData, change structure at later point
@@ -168,7 +168,7 @@ UARTIntHandler(void)
     // idk why we have 3 buffers, it made it work and I'm not questioning it. Prints it out to a string
     char buffer[50];
     // Echo value received back to PySerial
-    int length = sprintf(buffer, "%d %d %d \r\n", hwID, param1, param2);
+    int length = sprintf(buffer, "%d %c %d %d \r\n", hwID, hwType, param1, param2);
 
     // Length ignores the null character. Add 3 for CRLF
     UART0Send( (uint8_t *) buffer, length+3);
