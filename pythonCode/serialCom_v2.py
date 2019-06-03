@@ -1,14 +1,17 @@
 import serial
 import time
+import re
 
 class SerialCOm(object):
     def __init__(self,port):
         # Spin up the Serial Port
         self.tiva = serial.Serial()
-        self.tiva.baudrate = 115200
+        self.tiva.baudrate = 230400#1843200#115200
         self.tiva.port = port
         self.tiva.timeout = 1
         self.tiva.open()
+        self.lastFb = 0
+        self.fb =0
 
     def writeData(self,cmd):
         # Write to uart
@@ -25,10 +28,18 @@ class SerialCOm(object):
         #should have some caculation here
         for cmd in com_packet:
             self.writeData(cmd)
+        return self.fb
 
     def waitWriting(self):
         self.tiva.timeout = None
-        print(self.tiva.readline().decode('utf-8'))
+        line = self.tiva.readline().decode('utf-8')
+        print("waiting:",line)
+        self.lastFb =self.fb
+        floatList = re.findall(r"[-+]?\d*\.\d+|\d+", line)
+        if(len(floatList) !=0 ):
+            self.fb=floatList
+        else:
+            self.fb = self.lastFb
         self.tiva.timeout = None
 
     def sendStopCommand(self):
@@ -94,37 +105,38 @@ def testGood():
 
     outstring = "Time: " + str(end_time - start_time)
     print(outstring)
-
     # Close the serial port
     tiva.close()
 
+def test():
+    # Spin up the Serial Port
+    tiva = serial.Serial()
+    tiva.baudrate = 115200
+    tiva.port = 'COM12'
+    tiva.timeout = 1
+    start_time = time.time()
+    tiva.open()
+    while(True):
+        tiva.write("test\n".encode('utf-8'))
+
+
 if __name__ == '__main__':
-    tivaSerial = SerialCOm("COM11")#10
-    com_packet = ['0 m 20000 0;',
-                '1 m 30000 0;',
-                '2 m 40000 0;',
-                '3 m 50000 0;',
-                '4 e 1 0;']
-    com_packet2 = ['0 m 10000 0;',
-                '1 m 10001 0;',
-                '2 m 10002 0;',
-                '3 m 10003 0;']
+    # test()
+    tivaSerial = SerialCOm("COM13")#10
+    com_packet = [
+                # '0 m 5000 0;',
+                # '1 m 30000 0;',
+                # '2 m 40000 0;',
+                # '3 m 50000 0;',
+                # '4 e 1 0;',
+                '5 m 0IC;'
+    ]
     startTime = time.time()
 
-    for i in range(500):
-        tivaSerial.writeDataPack(com_packet)
-
-
-    # for i in range(100):
-    #     tivaSerial.writeDataPack(com_packet)
-    # tivaSerial.sendStopCommand()
-
-    com_packet = ['0 m 20000 0;',
-                '1 m 20000 0;',
-                '2 m 20000 0;',
-                '3 m 20000 0;',
-                '4 e 0 0;']
-    tivaSerial.writeDataPack(com_packet)
+    for i in range(50):
+        fb = tivaSerial.writeDataPack(com_packet)
+        print("feedback:",fb)
+        print()
 
     tivaSerial.sendStopCommand()
     endTime = time.time()

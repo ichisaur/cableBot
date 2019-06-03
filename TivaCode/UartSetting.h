@@ -40,18 +40,24 @@ void init_U1()
     ROM_GPIOPinTypeUART(GPIO_PORTB_BASE, GPIO_PIN_0 | GPIO_PIN_1);
 
     //
-    // Configure the UART for 115,200, 8-N-1 operation.
+    // Configure the UART for 115,200, 8-N-1 operation. 230400
     //
-    ROM_UARTConfigSetExpClk(UART1_BASE, ROM_SysCtlClockGet(), 115200,
+    ROM_UARTConfigSetExpClk(UART1_BASE, ROM_SysCtlClockGet(), 9600,
                             (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
                              UART_CONFIG_PAR_NONE));
+
+    //
+    // Enable the UART interrupt.
+    //
+    ROM_IntEnable(INT_UART1);
+    ROM_UARTIntEnable(UART1_BASE, UART_INT_RX | UART_INT_RT);
     return  ;
 }
 
-int UART1Read(char *RSInfo)
+int UART1Read(char *RSInfo, int start)
 {
 //    char buf[100];
-    int k =0;
+    int k =start;
     //Get all the characters until the next delimiter ( ; ) is hit
     while(1)
     {
@@ -59,7 +65,7 @@ int UART1Read(char *RSInfo)
         // Read the next character from the UART and write it to buffer
         RSInfo[k] = UARTCharGet(UART1_BASE);
         // check for delimiter
-        if (RSInfo[k] == '\n') break;
+        if (RSInfo[k] == '\r') break;
         k++;
     }
 
@@ -67,7 +73,8 @@ int UART1Read(char *RSInfo)
     RSInfo[k] = 32;
 
     //return the length of the char,with a space as the end
-    return k;
+//    return k ;
+    return (k);
 }
 
 void UART1Send(const uint8_t *pui8Buffer, uint32_t ui32Count)
