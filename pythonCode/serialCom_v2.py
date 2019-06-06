@@ -12,6 +12,7 @@ class SerialCOm(object):
         self.tiva.open()
         self.lastFb = 0
         self.fb =0
+        self.fbs = [0,0,0,0]
 
     def writeData(self,cmd):
         # Write to uart
@@ -36,8 +37,9 @@ class SerialCOm(object):
         print("waiting:",line)
         self.lastFb =self.fb
         floatList = re.findall(r"[-+]?\d*\.\d+|\d+", line)
-        if(len(floatList) !=0 ):
-            self.fb=floatList
+        if(len(floatList) !=0 and "IC" in line):
+            self.fb=floatList[1]
+            self.fbs[int(floatList[0])] = floatList[1]
         else:
             self.fb = self.lastFb
         self.tiva.timeout = None
@@ -124,16 +126,32 @@ if __name__ == '__main__':
     # test()
     tivaSerial = SerialCOm("COM13")#10
     com_packet = [
-                # '0 m 5000 0;',
-                # '1 m 30000 0;',
-                # '2 m 40000 0;',
-                # '3 m 50000 0;',
-                # '4 e 1 0;',
-                '5 m 0IC;'
+                 '0 m 10000 1;',
+                '1 m 30000 1;',
+                 # '2 m 40000 1;',
+                 # '3 m 20000 1;',
+                '4 e 1 0;'
+                #'5 m 0IC;'
     ]
     startTime = time.time()
 
     for i in range(50):
+        id = str(i%4)
+        # com_packet[1] = "5 m "+id+"IC;"
+        fb = tivaSerial.writeDataPack(com_packet)
+        print("feedback:",fb)
+        print()
+    com_packet = [
+                 '0 m 10000 1;',
+                '1 m 30000 1;',
+                 # '2 m 40000 1;',
+                 # '3 m 20000 1;',
+                '4 e 0 0;'
+                #'5 m 0IC;'
+    ]
+    for i in range(50):
+        id = str(i%4)
+        # com_packet[1] = "5 m "+id+"IC;"
         fb = tivaSerial.writeDataPack(com_packet)
         print("feedback:",fb)
         print()
@@ -141,4 +159,5 @@ if __name__ == '__main__':
     tivaSerial.sendStopCommand()
     endTime = time.time()
     print("time:",endTime-startTime)
+    print("motor currents:",tivaSerial.fbs)
 
