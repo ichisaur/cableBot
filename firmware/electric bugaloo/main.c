@@ -38,11 +38,15 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/uart.h"
 #include "driverlib/timer.h"
+#include "PWMSetting.h"
+#include "UartSetting.h"
 
-
-
+volatile int base =16000000;//=1hz
 volatile int myData[8];
 volatile int myDataCounter = 0;
+volatile int endEffectorOnOff = 0;
+volatile char RSinfo[100]={0};
+volatile int lenRsinfo = 0;
 
 void UART0Send(const uint8_t *, uint32_t );
 
@@ -72,7 +76,43 @@ __error__(char *pcFilename, uint32_t ui32Line)
 #endif
 
 
+void UART1IntHandler(void)
+{
+    uint32_t ui32Status;
 
+    //
+    // Get the interrrupt status.
+    //
+    ui32Status = ROM_UARTIntStatus(UART1_BASE, true);
+
+    //
+    // Clear the asserted interrupts.
+    //
+    ROM_UARTIntClear(UART1_BASE, ui32Status);
+
+//    lenRsinfo = UART1Read(&RSinfo,lenRsinfo);
+    lenRsinfo = UART1Read(&RSinfo,0);
+//    int k =0;
+//    while(k<6)
+//    {
+//        RSinfo[k] = UARTCharGet(UART1_BASE);
+//        if (RSinfo[k] == '\r') break;
+//        k++;
+//    }
+//    RSinfo[k] = 32;
+//    RSinfo[k] = 32;
+//    lenRsinfo = k;
+//    RSinfo[0] = UARTCharGet(UART1_BASE);
+//    RSinfo[1]='t';
+//    lenRsinfo=2;
+//    lenRsinfo = 3;
+//    RSinfo[0] = '1';
+//    RSinfo[1] = '1';
+//    RSinfo[2] = '1';
+
+//    UART0Send( (uint8_t *) RSinfo, lenRsinfo);
+
+}
 //*****************************************************************************
 //
 // Sends a char array to UART0
@@ -145,6 +185,14 @@ UARTIntHandler(void)
     char hwType;
     int param1;
     int param2;
+    int cmdLen;
+    int cmdNum;
+    char inputId[2];
+    char inputCommand[20]={0};
+    for (i=0;i<20;i++)
+    {
+        inputCommand[i]=32;
+    }
 
 
     // remove trash from the input
@@ -157,21 +205,42 @@ UARTIntHandler(void)
 
     // process string for variables
     // TODO: processing the hwType char doesnt work. May not needed, hard program in based on hwID
-    sscanf(myInput, "%1i %1c %i %i", &hwID, &hwType, &param1, &param2);
+    inputId[0] = myInput[0];
+    inputId[1] = myInput[1];
+    if (inputId[0]=='5')
+    {
+//        char buffer[50];
+//        sscanf(myInput, "%1i %1c %s %i", &hwID, &hwType,  &inputCommand, &param2);
+//        int length = sprintf(buffer, "%d %c %s %d \r\n", hwID, hwType,inputCommand,param2);
+//        inputCommand[param2] = 32;
+        UART0Send( (uint8_t *) myInput, k);
+        UART0Send( (uint8_t *) "\r\n", 2);
+        UART1Send( (uint8_t *) &myInput[4], k-4);
+        UART1Send( (uint8_t *) "\r",1);
+//        UART1Send( (uint8_t *) "1IE\r",4);
+    }
+    else
+    {
+        sscanf(myInput, "%1i %1c %i %i", &hwID, &hwType, &param1, &param2);
 
+        // Hardcoded implementation of placing it in myData, change structure at later point
+        if (hwID == 4) {
+            endEffectorOnOff = param1;
+        }
+        else {
+            myData[hwID] = param1;
+            myData[hwID + 4] = param2;
+            myDataCounter = myDataCounter +1;
+        }
+        // idk why we have 3 buffers, it made it work and I'm not questioning it. Prints it out to a string
+        char buffer[50];
+        // Echo value received back to PySerial
+        int length = sprintf(buffer, "%d %c %d %d \r\n", hwID, hwType, param1, param2);
 
-    // Hardcoded implementation of placing it in myData, change structure at later point
+        // Length ignores the null character. Add 3 for CRLF
+        UART0Send( (uint8_t *) buffer, length+3);
+    }
 
-    myData[hwID] = param1;
-    myData[hwID + 4] = param2;
-
-    // idk why we have 3 buffers, it made it work and I'm not questioning it. Prints it out to a string
-    char buffer[50];
-    // Echo value received back to PySerial
-    int length = sprintf(buffer, "%d %c %d %d \r\n", hwID, hwType, param1, param2);
-
-    // Length ignores the null character. Add 3 for CRLF
-    UART0Send( (uint8_t *) buffer, length+3);
 
     /* Deprecated code. AVERT YOUR EYES*/
 //    UART0Send( (uint8_t *) "\r\n", 2);
@@ -231,12 +300,30 @@ void Timer3IntHandler()
 
     // Create a buffer to write out to. Not needed anymore really
     char buffer[100] = {0};
+    char RSInfo[100] = {0};
+
+    //used for send command to uart1
+
+    setPWM01(myData[1],2,myData[3],2,base);
+    setTimer01(myData[0],2,myData[2],2,base);
+    setDirection(myData[4],myData[5],myData[6],myData[7]);
+    setEndeffector(endEffectorOnOff);
+
+    //used for read info from uart1, send with ignoring the \n
 
 
     // Should clear the current commands from myData here
     // Send over a "tick" for every time it finishes setting stuff up
-    UART0Send( (uint8_t *) "tick", 4);
-    UART0Send( (uint8_t *) "\r\n", 2);
+    if (lenRsinfo == 0){
+        UART0Send( (uint8_t *) "No Response", 10);
+        UART0Send( (uint8_t *) "\r\n", 2);
+    }
+    else{
+        UART0Send( (uint8_t *) "Cur:", 4);
+        UART0Send( (uint8_t *) RSinfo, lenRsinfo);
+        UART0Send( (uint8_t *) "\r\n", 2);
+        lenRsinfo = 0;
+    }
 
     // TODO: Implement tick checking on the python side it just kinda assumes any new line here works
 
@@ -284,7 +371,7 @@ int main(void)
     //
     // Configure the UART for 115,200, 8-N-1 operation.
     //
-    ROM_UARTConfigSetExpClk(UART0_BASE, ROM_SysCtlClockGet(), 115200,
+    ROM_UARTConfigSetExpClk(UART0_BASE, ROM_SysCtlClockGet(), 230400,
                             (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
                              UART_CONFIG_PAR_NONE));
 
@@ -298,7 +385,20 @@ int main(void)
     //
     // Initialize Timer 3 for Interrupts
     //
+    init_StepPin();
+    init_Timer01();
     init_Timer03();
+    init_PWM01();
+    init_U1();
+    setPWM01(0,4,0,4,base);
+    setTimer01(0,4,0,4,base);
+    setDirection(1,1,1,1);
+    setEndeffector(0);
+    int i;
+    for ( i =0;i<8;i++)
+    {
+        myData[i]=0;
+    }
 
 
     //
