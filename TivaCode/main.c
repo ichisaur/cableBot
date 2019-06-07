@@ -91,11 +91,24 @@ void UART1IntHandler(void)
     ROM_UARTIntClear(UART1_BASE, ui32Status);
 
 //    lenRsinfo = UART1Read(&RSinfo,lenRsinfo);
-//    lenRsinfo = UART1Read(&RSinfo,0);
-    lenRsinfo = 3;
-    RSinfo[0] = '1';
-    RSinfo[1] = '1';
-    RSinfo[2] = '1';
+    lenRsinfo = UART1Read(&RSinfo,0);
+//    int k =0;
+//    while(k<6)
+//    {
+//        RSinfo[k] = UARTCharGet(UART1_BASE);
+//        if (RSinfo[k] == '\r') break;
+//        k++;
+//    }
+//    RSinfo[k] = 32;
+//    RSinfo[k] = 32;
+//    lenRsinfo = k;
+//    RSinfo[0] = UARTCharGet(UART1_BASE);
+//    RSinfo[1]='t';
+//    lenRsinfo=2;
+//    lenRsinfo = 3;
+//    RSinfo[0] = '1';
+//    RSinfo[1] = '1';
+//    RSinfo[2] = '1';
 
 //    UART0Send( (uint8_t *) RSinfo, lenRsinfo);
 
@@ -202,9 +215,9 @@ UARTIntHandler(void)
 //        inputCommand[param2] = 32;
         UART0Send( (uint8_t *) myInput, k);
         UART0Send( (uint8_t *) "\r\n", 2);
-//UART1Send( (uint8_t *) &myInput[4], k-5);
-//        UART1Send( (uint8_t *) "\r",1);
-        UART1Send( (uint8_t *) "0IC\r",4);
+        UART1Send( (uint8_t *) &myInput[4], k-4);
+        UART1Send( (uint8_t *) "\r",1);
+//        UART1Send( (uint8_t *) "1IE\r",4);
     }
     else
     {
@@ -302,7 +315,7 @@ void Timer3IntHandler()
     // Should clear the current commands from myData here
     // Send over a "tick" for every time it finishes setting stuff up
     if (lenRsinfo == 0){
-        UART0Send( (uint8_t *) "No Response", 4);
+        UART0Send( (uint8_t *) "No Response", 10);
         UART0Send( (uint8_t *) "\r\n", 2);
     }
     else{
