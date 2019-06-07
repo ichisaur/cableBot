@@ -90,27 +90,10 @@ void UART1IntHandler(void)
     //
     ROM_UARTIntClear(UART1_BASE, ui32Status);
 
-//    lenRsinfo = UART1Read(&RSinfo,lenRsinfo);
+    //
+    // read the data from uart1
+    //
     lenRsinfo = UART1Read(&RSinfo,0);
-//    int k =0;
-//    while(k<6)
-//    {
-//        RSinfo[k] = UARTCharGet(UART1_BASE);
-//        if (RSinfo[k] == '\r') break;
-//        k++;
-//    }
-//    RSinfo[k] = 32;
-//    RSinfo[k] = 32;
-//    lenRsinfo = k;
-//    RSinfo[0] = UARTCharGet(UART1_BASE);
-//    RSinfo[1]='t';
-//    lenRsinfo=2;
-//    lenRsinfo = 3;
-//    RSinfo[0] = '1';
-//    RSinfo[1] = '1';
-//    RSinfo[2] = '1';
-
-//    UART0Send( (uint8_t *) RSinfo, lenRsinfo);
 
 }
 //*****************************************************************************
@@ -164,8 +147,6 @@ UARTIntHandler(void)
     {
 
         // Read the next character from the UART and write it to buffer
-
-
         buf[k] = UARTCharGet(UART0_BASE);
 
         // check for delimiter
@@ -204,20 +185,15 @@ UARTIntHandler(void)
     }
 
     // process string for variables
-    // TODO: processing the hwType char doesnt work. May not needed, hard program in based on hwID
+    // processing the hwID, if"5", send command to RS-485. Or store the command into buffer
     inputId[0] = myInput[0];
     inputId[1] = myInput[1];
     if (inputId[0]=='5')
     {
-//        char buffer[50];
-//        sscanf(myInput, "%1i %1c %s %i", &hwID, &hwType,  &inputCommand, &param2);
-//        int length = sprintf(buffer, "%d %c %s %d \r\n", hwID, hwType,inputCommand,param2);
-//        inputCommand[param2] = 32;
         UART0Send( (uint8_t *) myInput, k);
         UART0Send( (uint8_t *) "\r\n", 2);
         UART1Send( (uint8_t *) &myInput[4], k-4);
         UART1Send( (uint8_t *) "\r",1);
-//        UART1Send( (uint8_t *) "1IE\r",4);
     }
     else
     {
@@ -232,7 +208,6 @@ UARTIntHandler(void)
             myData[hwID + 4] = param2;
             myDataCounter = myDataCounter +1;
         }
-        // idk why we have 3 buffers, it made it work and I'm not questioning it. Prints it out to a string
         char buffer[50];
         // Echo value received back to PySerial
         int length = sprintf(buffer, "%d %c %d %d \r\n", hwID, hwType, param1, param2);
@@ -240,16 +215,6 @@ UARTIntHandler(void)
         // Length ignores the null character. Add 3 for CRLF
         UART0Send( (uint8_t *) buffer, length+3);
     }
-
-
-    /* Deprecated code. AVERT YOUR EYES*/
-//    UART0Send( (uint8_t *) "\r\n", 2);
-
-//  sscanf(buf, "%d %d %d %d %d %d %d %d", &myData[0], &myData[1], &myData[2], &myData[3], &myData[4], &myData[5], &myData[6], &myData[7]);
-//    sscanf(buf, "%d", &myData[myDataCounter]);
-//  myDataCounter = (myDataCounter + 1) % 8;
-
-
 }
 
 //*****************************************************************************
@@ -261,11 +226,8 @@ UARTIntHandler(void)
 
 void init_Timer03()
 {
-    unsigned long Period;
     //configure Timer3
-
-//    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-//    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3);
+    unsigned long Period;
 
     SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER3);
     TimerConfigure(TIMER3_BASE, TIMER_CFG_PERIODIC);
@@ -294,26 +256,22 @@ void Timer3IntHandler()
     // Clear the interrupt
     TimerIntClear(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
 
-    // TODO: SET PWMS HERE
-    // TODO: SET DIRECTION PINS HERE
-    // TODO: ANY OTHER JUNK HERE
-
     // Create a buffer to write out to. Not needed anymore really
     char buffer[100] = {0};
     char RSInfo[100] = {0};
 
-    //used for send command to uart1
-
+    //
+    //configure the PWM output and direction pins as motor command
+    //trigger the end effector
+    //
     setPWM01(myData[1],2,myData[3],2,base);
     setTimer01(myData[0],2,myData[2],2,base);
     setDirection(myData[4],myData[5],myData[6],myData[7]);
     setEndeffector(endEffectorOnOff);
 
-    //used for read info from uart1, send with ignoring the \n
-
-
-    // Should clear the current commands from myData here
-    // Send over a "tick" for every time it finishes setting stuff up
+    //
+    // send "no response" if not RS-485 response received, send response if got
+    //
     if (lenRsinfo == 0){
         UART0Send( (uint8_t *) "No Response", 10);
         UART0Send( (uint8_t *) "\r\n", 2);
@@ -324,18 +282,12 @@ void Timer3IntHandler()
         UART0Send( (uint8_t *) "\r\n", 2);
         lenRsinfo = 0;
     }
-
-    // TODO: Implement tick checking on the python side it just kinda assumes any new line here works
-
 }
 
 
 
 int main(void)
 {
-
-    /*  INITIALIZE UART */
-
     //
     // Enable lazy stacking for interrupt handlers.  This allows floating-point
     // instructions to be used within interrupt handlers, but at the expense of
@@ -383,17 +335,49 @@ int main(void)
 
 
     //
-    // Initialize Timer 3 for Interrupts
+    // Configure pins for PWM, direction pins
     //
     init_StepPin();
+
+    //
+    // Initialize Timer 0 and 1 for PWM output
+    //
     init_Timer01();
+
+    //
+    // Initialize Timer 3 for Interrupts
+    //
     init_Timer03();
+
+    //
+    // Initialize PWM0 and PWM1 for PWM outputs
+    //
     init_PWM01();
+
+    //
+    // Configure uart1 for communication with RS-485
+    //
     init_U1();
+
+    //
+    // set the PWM output frequency, duty circle
+    //
     setPWM01(0,4,0,4,base);
     setTimer01(0,4,0,4,base);
+
+    //
+    // Set the direction for four direction pins
+    //
     setDirection(1,1,1,1);
+
+    //
+    // Set the trigger of the end effector
+    //
     setEndeffector(0);
+
+    //
+    // Initialize buffer for storing the motor command
+    //
     int i;
     for ( i =0;i<8;i++)
     {
